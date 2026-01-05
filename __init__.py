@@ -329,7 +329,7 @@ class CreateTwelveLabsIndex(foo.Operator):
         )]
 
         index = client.indexes.create(
-            name=INDEX_NAME,
+            index_name=INDEX_NAME,
             models=models,
         )
 
