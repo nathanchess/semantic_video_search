@@ -129,7 +129,7 @@ class CreateTwelveLabsEmbeddings(foo.Operator):
                     )
 
                     i += 1
-                    det.embedding = segment.embeddings_float
+                    det.embedding = segment.float_
                     dets.append(det)
 
                 # Edited sample name please verify that this works in Voxel51 platform integration.
