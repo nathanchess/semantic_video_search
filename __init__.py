@@ -215,8 +215,8 @@ class TwelveLabsSemanticSearch(foo.Operator):
             "Twelve Labs " + index_name, video_ids, ordered=True
         )
         print(f"Found {len(view1)} samples")
-        start = [entry.start for entry in search_results.data]
-        end = [entry.end for entry in search_results.data]
+        start = [entry.start for entry in search_results]
+        end = [entry.end for entry in search_results]
         if "results" in ctx.dataset.get_field_schema().keys():
             ctx.dataset.delete_sample_field("results")
 
@@ -406,13 +406,15 @@ class TwelveLabsIndexSearch(foo.Operator):
                 audio_flag = False
 
                 index_info = {}
-                indexes[0].models.root[0].options
+                # indexes[0].models.root[0].options
                 for index in indexes:
-                    if "visual" in index.models.root[0].options:
-                        vis_flag = True
-                    if "audio" in index.models.root[0].options:
-                        audio_flag = True
-                    index_info[index.name] = index.id
+                    for i, model in enumerate(index.models or [], 1):
+                        if "visual" in model.model_options:
+                            vis_flag = True
+                        if "audio" in model.model_options:
+                            audio_flag = True
+                    
+                    index_info[index.index_name] = index.id
 
                 choices = index_info.keys()
                 choices_compare = [
@@ -508,7 +510,7 @@ class TwelveLabsIndexSearch(foo.Operator):
 
         indexes = list(client.indexes.list())
         for index in indexes:
-            if index.name == index_name:
+            if index.index_name == index_name:
                 index_id = index.id
 
         prompt = ctx.params.get("prompt")
@@ -529,15 +531,15 @@ class TwelveLabsIndexSearch(foo.Operator):
                 index_id=index_id, query_text=prompt, search_options=so
             )
 
-        video_ids = [entry.video_id for entry in search_results.data]
+        video_ids = [entry.video_id for entry in search_results]
         print(f"Found {len(video_ids)} videos")
         samples = []
         view1 = target_view.select_by(
             "Twelve Labs " + index_name, video_ids, ordered=True
         )
         print(f"Found {len(view1)} samples")
-        start = [entry.start for entry in search_results.data]
-        end = [entry.end for entry in search_results.data]
+        start = [entry.start for entry in search_results]
+        end = [entry.end for entry in search_results]
         if "results" in ctx.dataset.get_field_schema().keys():
             ctx.dataset.delete_sample_field("results")
 
