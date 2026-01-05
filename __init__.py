@@ -1,4 +1,3 @@
-from twelvelabs..indexes.types.indexes_create_request_models_item import IndexesCreateRequestModelsItem
 import fiftyone as fo
 import fiftyone.operators as foo
 from fiftyone.operators import types
@@ -10,6 +9,7 @@ from pprint import pprint
 import os
 from twelvelabs import TwelveLabs
 from twelvelabs.embed import TasksStatusResponse
+from twelvelabs.indexes import IndexesCreateRequestModelsItem
 
 class CreateTwelveLabsEmbeddings(foo.Operator):
     @property
