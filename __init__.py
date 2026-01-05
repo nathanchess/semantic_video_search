@@ -1,3 +1,4 @@
+from twelvelabs..indexes.types.indexes_create_request_models_item import IndexesCreateRequestModelsItem
 import fiftyone as fo
 import fiftyone.operators as foo
 from fiftyone.operators import types
@@ -8,7 +9,7 @@ import glob
 from pprint import pprint
 import os
 from twelvelabs import TwelveLabs
-
+from twelvelabs.embed import TasksStatusResponse
 
 class CreateTwelveLabsEmbeddings(foo.Operator):
     @property
@@ -99,22 +100,24 @@ class CreateTwelveLabsEmbeddings(foo.Operator):
                 file_name = sample.filepath.split("/")[-1]
                 file_path = sample.filepath
 
-                task = client.embed.task.create(
-                    model_name="Marengo-retrieval-2.7",
+                task = client.embed.tasks.create(
+                    model_name="marengo3.0",
                     video_file=file_path,
                 )
 
-                def on_task_update(task):
+                def on_task_update(task: TasksStatusResponse):
                     print(f"  Status={task.status}")
 
-                task.wait_for_done(sleep_interval=5, callback=on_task_update)
+                status = client.embed.tasks.wait_for_done(task.id, callback=on_task_update, sleep_interval=1)
 
-                if task.status != "ready":
-                    raise RuntimeError(f"Indexing failed with status {task.status}")
-
-                retrieved_task = task.retrieve(
-                    embedding_option=["visual-text", "audio"]
+                retrieved_task = client.embed.tasks.retrieve(
+                    task_id=task.id,
+                    embedding_option=["visual", "audio"]
                 )
+
+                if not retrieved_task.video_embedding or not retrieved_task.video_embedding.segments:
+                    raise ValueError("No embeddings found for video: " + file_name)
+
                 i = 0
                 dets = []
                 for segment in retrieved_task.video_embedding.segments:
@@ -128,7 +131,8 @@ class CreateTwelveLabsEmbeddings(foo.Operator):
                     det.embedding = segment.embeddings_float
                     dets.append(det)
 
-                sample["Twelve Labs Marengo-retrieval-27"] = fo.TemporalDetections(
+                # Edited sample name please verify that this works in Voxel51 platform integration.
+                sample["Twelve Labs Marengo-3.0"] = fo.TemporalDetections(
                     detections=dets
                 )
                 sample.save()
@@ -162,7 +166,7 @@ class TwelveLabsSemanticSearch(foo.Operator):
         else:
             target_view = get_target_view(ctx, inputs)
             client = TwelveLabs(api_key=API_KEY)
-            indexes = client.index.list()
+            indexes = client.indexes.list()
 
             if not any(
                 field.startswith("Twelve Labs")
@@ -200,7 +204,7 @@ class TwelveLabsSemanticSearch(foo.Operator):
         prompt = ctx.params.get("prompt")
 
         res = client.embed.create(
-            model_name="Marengo-retrieval-2.7",
+            model_name="marengo3.0",
             text=prompt,
         )
 
@@ -319,7 +323,10 @@ class CreateTwelveLabsIndex(foo.Operator):
         if ctx.params.get("audio"):
             so.append("audio")
 
-        models = [{"name": "marengo2.7", "options": so}]
+        models = [IndexesCreateRequestModelsItem(
+            model_name="marengo3.0",
+            model_options=so
+        )]
 
         index = client.index.create(
             name=INDEX_NAME,
@@ -336,14 +343,14 @@ class CreateTwelveLabsIndex(foo.Operator):
                 file_name = sample.filepath.split("/")[-1]
                 file_path = sample.filepath
 
-                task = client.task.create(index_id=index_id, file=file_path)
+                task = client.tasks.create(index_id=index_id, video_file=file_path)
 
                 def on_task_update(task):
                     print(f"  Status={task.status}")
 
-                task.wait_for_done(sleep_interval=5, callback=on_task_update)
+                status_task = client.tasks.wait_for_done(task_id=task.id, callback=on_task_update)
 
-                if task.status != "ready":
+                if status_task.status != "ready":
                     raise RuntimeError(f"Indexing failed with status {task.status}")
 
                 video_id = task.video_id
@@ -380,7 +387,7 @@ class TwelveLabsIndexSearch(foo.Operator):
         else:
             target_view = get_target_view(ctx, inputs)
             client = TwelveLabs(api_key=API_KEY)
-            indexes = client.index.list()
+            indexes = client.indexes.list()
 
             if indexes == []:
                 inputs.view(
@@ -496,7 +503,7 @@ class TwelveLabsIndexSearch(foo.Operator):
 
         index_name = ctx.params.get("index_name")
 
-        indexes = client.index.list()
+        indexes = client.indexes.list()
         for index in indexes:
             if index.name == index_name:
                 index_id = index.id
@@ -512,11 +519,11 @@ class TwelveLabsIndexSearch(foo.Operator):
 
         if len(so) >= 2:
             search_results = client.search.query(
-                index_id=index_id, query_text=prompt, options=so, operator="and"
+                index_id=index_id, query_text=prompt, search_options=so, operator="and"
             )
         else:
             search_results = client.search.query(
-                index_id=index_id, query_text=prompt, options=so
+                index_id=index_id, query_text=prompt, search_options=so
             )
 
         video_ids = [entry.video_id for entry in search_results.data]
