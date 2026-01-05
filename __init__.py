@@ -99,11 +99,12 @@ class CreateTwelveLabsEmbeddings(foo.Operator):
             else:
                 file_name = sample.filepath.split("/")[-1]
                 file_path = sample.filepath
-
-                task = client.embed.tasks.create(
-                    model_name="marengo3.0",
-                    video_file=file_path,
-                )
+                
+                with open(file_path, "rb") as f:
+                    task = client.embed.tasks.create(
+                        model_name="marengo3.0",
+                        video_file=f,
+                    )
 
                 def on_task_update(task: TasksStatusResponse):
                     print(f"  Status={task.status}")
@@ -208,7 +209,6 @@ class TwelveLabsSemanticSearch(foo.Operator):
             text=prompt,
         )
 
-        
         print(f"Found {len(video_ids)} videos")
         samples = []
         view1 = target_view.select_by(
@@ -343,7 +343,8 @@ class CreateTwelveLabsIndex(foo.Operator):
                 file_name = sample.filepath.split("/")[-1]
                 file_path = sample.filepath
 
-                task = client.tasks.create(index_id=index_id, video_file=file_path)
+                with open(file_path, "rb") as f:
+                    task = client.tasks.create(index_id=index_id, video_file=f)
 
                 def on_task_update(task):
                     print(f"  Status={task.status}")
