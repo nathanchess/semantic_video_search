@@ -132,8 +132,7 @@ class CreateTwelveLabsEmbeddings(foo.Operator):
                     det.embedding = segment.float_
                     dets.append(det)
 
-                # Edited sample name please verify that this works in Voxel51 platform integration.
-                sample["Twelve Labs Marengo-3.0"] = fo.TemporalDetections(
+                sample["Twelve Labs Marengo-retrieval-27"] = fo.TemporalDetections(
                     detections=dets
                 )
                 sample.save()
