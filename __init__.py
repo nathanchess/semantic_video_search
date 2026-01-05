@@ -167,7 +167,7 @@ class TwelveLabsSemanticSearch(foo.Operator):
         else:
             target_view = get_target_view(ctx, inputs)
             client = TwelveLabs(api_key=API_KEY)
-            indexes = client.indexes.list()
+            indexes = list(client.indexes.list())
 
             if not any(
                 field.startswith("Twelve Labs")
@@ -388,9 +388,10 @@ class TwelveLabsIndexSearch(foo.Operator):
         else:
             target_view = get_target_view(ctx, inputs)
             client = TwelveLabs(api_key=API_KEY)
-            indexes = client.indexes.list()
+            indexes = list(client.indexes.list())
 
             if indexes == []:
+                
                 inputs.view(
                     "No Index",
                     types.Warning(
@@ -398,6 +399,7 @@ class TwelveLabsIndexSearch(foo.Operator):
                         description="Please run `create semantic video index` first in order to semantic search on your dataset!",
                     ),
                 )
+
             else:
 
                 vis_flag = False
@@ -504,7 +506,7 @@ class TwelveLabsIndexSearch(foo.Operator):
 
         index_name = ctx.params.get("index_name")
 
-        indexes = client.indexes.list()
+        indexes = list(client.indexes.list())
         for index in indexes:
             if index.name == index_name:
                 index_id = index.id
