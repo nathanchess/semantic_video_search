@@ -1,9 +1,9 @@
-name: "@nathanchess/semantic_video_search"
-description: Semantic Video Search 3.0
+name: "@danielgural/semantic_video_search"
+description: Semantic Video Search
 version: 1.0.0
 fiftyone:
   version: "*"
-url: https://github.com/nathanchess/semantic_video_search/tree/marengo-update
+url: https://github.com/danielgural/semantic_video_search/blob/main/README.md
 license: Apache 2.0
 operators:
   - twelve_labs_index_search
